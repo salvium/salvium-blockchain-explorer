@@ -12,22 +12,27 @@ if (WIN32)
     set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wa,-mbig-obj -O3")
 endif()
 
-
+set(MONERO_DIR $ENV{MONERO_DIR})
+    
 if (NOT MONERO_DIR)
-    set(MONERO_DIR ~/monero)
+#    set(MONERO_DIR ~/monero)
 endif()
 
 message(STATUS MONERO_DIR ": ${MONERO_DIR}")
 
 if (NOT MONERO_SOURCE_DIR)
-    set(MONERO_SOURCE_DIR ${MONERO_DIR}
+    set(MONERO_SOURCE_DIR $ENV{MONERO_DIR}
           CACHE PATH "Path to the root directory for Monero")
 endif()
+
+message(STATUS MONERO_SOURCE_DIR ": ${MONERO_SOURCE_DIR}")
 
 if (NOT MONERO_BUILD_DIR)
     # set location of monero build tree
     set(MONERO_BUILD_DIR ${MONERO_SOURCE_DIR}/build/release/
           CACHE PATH "Path to the build directory for Monero")
+
+   message(STATUS MONERO_BUILD_DIR ": ${MONERO_BUILD_DIR}")
 
    if (NOT EXISTS ${MONERO_BUILD_DIR})   
         # try different location   
@@ -151,6 +156,7 @@ set(LIBRARIES
         lmdb
         ringct
         ringct_basic
+        oracle
         common
         mnemonics
         easylogging

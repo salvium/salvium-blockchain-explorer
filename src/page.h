@@ -267,13 +267,6 @@ me_get_block_longhash(const Blockchain *pbc,
                    const uint64_t height,
                    const int miners)
 {
-  // block 202612 bug workaround
-  if (height == 202612)
-  {
-    static const std::string longhash_202612 = "84f64766475d51837ac9efbef1926486e58563c95a19fef4aec3254f03000000";
-    epee::string_tools::hex_to_pod(longhash_202612, res);
-    return true;
-  }
   blobdata bd = get_block_hashing_blob(b);
   if (b.major_version >= RX_BLOCK_VERSION)
   {
@@ -316,6 +309,7 @@ struct tx_details
     uint64_t xmr_outputs;
     uint64_t num_nonrct_inputs;
     uint64_t fee;
+    uint64_t amount_burnt;
     uint64_t mixin_no;
     uint64_t size;
     uint64_t blk_height;
@@ -327,6 +321,8 @@ struct tx_details
     uint64_t no_confirmations;
     vector<uint8_t> extra;
 
+    cryptonote::transaction_type tx_type;
+  
     crypto::hash  payment_id  = null_hash; // normal
     crypto::hash8 payment_id8 = null_hash8; // encrypted
 
@@ -392,6 +388,7 @@ struct tx_details
                 {"payment_id"        , pod_to_hex(payment_id)},
                 {"confirmations"     , no_confirmations},
                 {"extra"             , get_extra_str()},
+                {"tx_type"           , get_txtype_str()},
                 {"payment_id8"       , pod_to_hex(payment_id8)},
                 {"unlock_time"       , unlock_time},
                 {"tx_size"           , fmt::format("{:0.4f}", tx_size)},
@@ -409,6 +406,19 @@ struct tx_details
     {
         return epee::string_tools::buff_to_hex_nodelimer(
                 string{reinterpret_cast<const char*>(extra.data()), extra.size()});
+    }
+
+
+    string
+    get_txtype_str() const
+    {
+      if (tx_type == cryptonote::transaction_type::MINER) return "MINER";
+      else if (tx_type == cryptonote::transaction_type::PROTOCOL) return "PROTOCOL";
+      else if (tx_type == cryptonote::transaction_type::TRANSFER) return "TRANSFER";
+      else if (tx_type == cryptonote::transaction_type::BURN) return "BURN";
+      else if (tx_type == cryptonote::transaction_type::CONVERT) return "CONVERT";
+      else if (tx_type == cryptonote::transaction_type::STAKE) return "STAKE";
+      return "-";
     }
 
 
@@ -677,6 +687,11 @@ index2(uint64_t page_no = 0, bool refresh_page = false)
         vector<cryptonote::transaction> blk_txs {blk.miner_tx};
         vector<crypto::hash> missed_txs;
 
+        // Check to see if the protocol_tx has any outputs
+        if (blk.protocol_tx.vout.size()) {
+          blk_txs.push_back(blk.protocol_tx);
+        }
+
         if (!core_storage->get_transactions(blk.tx_hashes, blk_txs, missed_txs))
         {
             cerr << "Cant get transactions in block: " << i << endl;
@@ -704,7 +719,6 @@ index2(uint64_t page_no = 0, bool refresh_page = false)
             txd_map.insert({"is_ringct" , (tx.version > 1)});
             txd_map.insert({"rct_type"  , tx.rct_signatures.type});
             txd_map.insert({"blk_size"  , blk_size_str});
-
 
             // do not show block info for other than first tx in a block
             if (tx_i > 0)
@@ -808,14 +822,18 @@ index2(uint64_t page_no = 0, bool refresh_page = false)
         CurrentBlockchainStatus::Emission current_values
                 = CurrentBlockchainStatus::get_emission();
 
+        uint64_t tvl = CurrentBlockchainStatus::get_yield_info();
+
         string emission_blk_no   = std::to_string(current_values.blk_no - 1);
         string emission_coinbase = xmr_amount_to_str(current_values.coinbase, "{:0.3f}");
         string emission_fee      = xmr_amount_to_str(current_values.fee, "{:0.3f}");
+        string tvl_str           = xmr_amount_to_str(tvl, "{:0.3f}", false);
 
         context["emission"] = mstch::map {
                 {"blk_no"    , emission_blk_no},
                 {"amount"    , emission_coinbase},
-                {"fee_amount", emission_fee}
+                {"fee_amount", emission_fee},
+                {"tvl_amount", tvl_str}
         };
     }
     else
@@ -1100,6 +1118,10 @@ show_block(uint64_t _blk_height)
     tx_details txd_coinbase = get_tx_details(blk.miner_tx, true,
                                              _blk_height, current_blockchain_height);
 
+    // get tx details for the protocol tx
+    tx_details txd_protocol = get_tx_details(blk.protocol_tx, true,
+                                             _blk_height, current_blockchain_height);
+
     // initalise page tempate map with basic info about blockchain
 
     string blk_pow_hash_str = pod_to_hex(get_block_longhash(core_storage, blk, _blk_height, 0));
@@ -1124,7 +1146,7 @@ show_block(uint64_t _blk_height)
             {"delta_time"           , delta_time},
             {"blk_nonce"            , blk.nonce},
             {"blk_pow_hash"         , blk_pow_hash_str},
-            {"is_randomx"           , (blk.major_version >= 12
+            {"is_randomx"           , (blk.major_version >= 1
                                             && enable_randomx == true)},
             {"blk_difficulty"       , blk_difficulty.str()},
             {"age_format"           , age.second},
@@ -1134,6 +1156,7 @@ show_block(uint64_t _blk_height)
                                                   static_cast<double>(blk_size) / 1024.0)},
     };
     context.emplace("coinbase_txs", mstch::array{{txd_coinbase.get_mstch_map()}});
+    context.emplace("protocol_txs", mstch::array{{txd_protocol.get_mstch_map()}});
     context.emplace("blk_txs"     , mstch::array());
 
     // .push_back(txd_coinbase.get_mstch_map()
@@ -1190,7 +1213,9 @@ show_block(uint64_t _blk_height)
 
     // get xmr in the block reward
     context["blk_reward"]
-            = xmreg::xmr_amount_to_str(txd_coinbase.xmr_outputs - sum_fees, "{:0.6f}");
+      = xmreg::xmr_amount_to_str(txd_coinbase.xmr_outputs - sum_fees, "{:0.6f}");
+    context["blk_yield"]
+      = xmreg::xmr_amount_to_str((txd_coinbase.amount_burnt), "{:0.6f}");
 
     add_css_style(context);
 
@@ -2103,7 +2128,7 @@ show_my_outputs(string tx_hash_str,
             {"blk_height"           , tx_blk_height_str},
             {"tx_size"              , fmt::format("{:0.4f}",
                                                   static_cast<double>(txd.size) / 1024.0)},
-            {"tx_fee"               , xmreg::xmr_amount_to_str(txd.fee, "{:0.12f}", true)},
+            {"tx_fee"               , xmreg::xmr_amount_to_str(txd.fee, "{:0.08f}", true)},
             {"blk_timestamp"        , blk_timestamp},
             {"delta_time"           , age.first},
             {"outputs_no"           , static_cast<uint64_t>(txd.output_pub_keys.size())},
@@ -2684,7 +2709,7 @@ show_my_outputs(string tx_hash_str,
         context["show_inputs"]   = show_key_images;
         context["inputs_no"]     = static_cast<uint64_t>(inputs.size());
         context["sum_mixin_xmr"] = xmreg::xmr_amount_to_str(
-                sum_mixin_xmr, "{:0.12f}", false);
+                sum_mixin_xmr, "{:0.8f}", false);
 
 
         uint64_t possible_spending  {0};
@@ -2717,7 +2742,7 @@ show_my_outputs(string tx_hash_str,
         }
 
         context["possible_spending"] = xmreg::xmr_amount_to_str(
-                possible_spending, "{:0.12f}", false);
+                possible_spending, "{:0.8f}", false);
 
     } // if (enable_mixin_guess)
 
@@ -5976,6 +6001,7 @@ get_tx_json(const transaction& tx, const tx_details& txd)
             {"coinbase"    , is_coinbase(tx)},
             {"mixin"       , txd.mixin_no},
             {"extra"       , txd.get_extra_str()},
+            {"tx_type"     , txd.get_txtype_str()},
             {"payment_id"  , (txd.payment_id  != null_hash  ? pod_to_hex(txd.payment_id)  : "")},
             {"payment_id8" , (txd.payment_id8 != null_hash8 ? pod_to_hex(txd.payment_id8) : "")},
     };
@@ -6126,9 +6152,9 @@ construct_tx_context(transaction tx, uint16_t with_ring_signatures = 0)
             {"blk_height"            , tx_blk_height_str},
             {"tx_blk_height"         , tx_blk_height},
             {"tx_size"               , fmt::format("{:0.4f}", tx_size)},
-            {"tx_fee"                , xmreg::xmr_amount_to_str(txd.fee, "{:0.12f}", false)},
+            {"tx_fee"                , xmreg::xmr_amount_to_str(txd.fee, "{:0.8f}", false)},
             {"tx_fee_micro"          , xmreg::xmr_amount_to_str(txd.fee*1e6, "{:0.4f}", false)},
-            {"payed_for_kB"          , fmt::format("{:0.12f}", payed_for_kB)},
+            {"payed_for_kB"          , fmt::format("{:0.8f}", payed_for_kB)},
             {"tx_version"            , static_cast<uint64_t>(txd.version)},
             {"blk_timestamp"         , blk_timestamp},
             {"blk_timestamp_uint"    , blk.timestamp},
@@ -6142,6 +6168,7 @@ construct_tx_context(transaction tx, uint16_t with_ring_signatures = 0)
             {"payment_id"            , pid_str},
             {"payment_id8"           , pid8_str},
             {"extra"                 , txd.get_extra_str()},
+            {"tx_type"               , txd.get_txtype_str()},
             {"with_ring_signatures"  , static_cast<bool>(
                                                with_ring_signatures)},
             {"tx_json"               , tx_json},
@@ -6431,7 +6458,7 @@ construct_tx_context(transaction tx, uint16_t with_ring_signatures = 0)
     context.emplace("inputs", inputs);
 
     // get indices of outputs in amounts tables
-    vector<uint64_t> out_amount_indices;
+    vector<pair<uint64_t, uint64_t>> out_amount_indices;
 
     try
     {
@@ -6477,7 +6504,7 @@ construct_tx_context(transaction tx, uint16_t with_ring_signatures = 0)
         if (!out_amount_indices.empty())
         {
             out_amount_index_str
-                    = std::to_string(out_amount_indices.at(output_idx));
+                    = std::to_string(out_amount_indices.at(output_idx).first);
         }
 
         outputs_xmr_sum += std::get<1>(outp);
@@ -6606,6 +6633,10 @@ get_tx_details(const transaction& tx,
 
     txd.fee = 0;
 
+    txd.tx_type = tx.type;
+
+    txd.amount_burnt = tx.amount_burnt;
+    
     if (!coinbase &&  tx.vin.size() > 0)
     {
         // check if not miner tx
@@ -7044,7 +7075,7 @@ get_output_key(uint64_t amount, Args&&... args)
 template <typename T, typename... Args>
 typename std::enable_if<
     !OutputIndicesReturnVectOfVectT<T>::value, void>::type
-get_tx_amount_output_indices(vector<uint64_t>& out_amount_indices, Args&&... args)
+get_tx_amount_output_indices(vector<pair<uint64_t, uint64_t>>& out_amount_indices, Args&&... args)
 {
     out_amount_indices = core_storage->get_db()
        .get_tx_amount_output_indices(std::forward<Args>(args)...);
@@ -7053,7 +7084,7 @@ get_tx_amount_output_indices(vector<uint64_t>& out_amount_indices, Args&&... arg
 template <typename T, typename... Args>
 typename std::enable_if<
     OutputIndicesReturnVectOfVectT<T>::value, void>::type
-get_tx_amount_output_indices(vector<uint64_t>& out_amount_indices, Args&&... args)
+get_tx_amount_output_indices(vector<pair<uint64_t, uint64_t>>& out_amount_indices, Args&&... args)
 {
     out_amount_indices = core_storage->get_db()
        .get_tx_amount_output_indices(std::forward<Args>(args)...).front();

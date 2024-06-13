@@ -297,6 +297,24 @@ CurrentBlockchainStatus::is_thread_running()
    return is_running;
 }
 
+uint64_t
+CurrentBlockchainStatus::get_yield_info()
+{
+  // Get the number of locked coins as of last block
+  uint64_t current_height = core_storage->get_current_blockchain_height();
+
+  // Check that we have the yield data for the current block
+  cryptonote::yield_block_info ybi = AUTO_VAL_INIT(ybi);
+  if (!core_storage->get_ybi_entry(current_height-1, ybi)) {
+    cerr << "failed to get YBI data from blockchain" << endl;
+    return ((uint64_t)-1);
+  }
+
+  cerr << "managed to get YBI data from blockchain: " << ybi.locked_coins_tally << endl;
+  return ybi.locked_coins_tally;
+}        
+
+
 bf::path CurrentBlockchainStatus::blockchain_path {"/home/mwo/.bitmonero/lmdb"};
 
 cryptonote::network_type CurrentBlockchainStatus::nettype {cryptonote::network_type::MAINNET};

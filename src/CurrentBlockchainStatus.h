@@ -90,6 +90,9 @@ struct CurrentBlockchainStatus
     static void
     update_current_emission_amount();
 
+    static void
+    update_current_yield();
+
     static Emission
     calculate_emission_in_blocks(uint64_t start_blk, uint64_t end_blk);
 
@@ -101,12 +104,15 @@ struct CurrentBlockchainStatus
 
     static Emission
     get_emission();
-
+  
     static bf::path
     get_output_file_path();
 
     static bool
     is_thread_running();
+
+    static uint64_t
+    get_yield_info();
 };
 
 }

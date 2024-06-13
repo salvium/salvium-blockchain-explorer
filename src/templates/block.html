@@ -32,9 +32,10 @@
         </tr>
         <tr>
             <td>PoW hash:</td><td>{{blk_pow_hash}}</td>
+            <td>Yield this block:</td><td>{{blk_yield}}</td>
             <td>Difficulty:</td><td>{{blk_difficulty}}</td>
             {{#is_randomx}}
-                <td colspan="2"><a href="/randomx/{{blk_height}}">RandomX source code</a></td>
+                <td><a href="/randomx/{{blk_height}}">RandomX source code</a></td>
             {{/is_randomx}}
             {{^is_randomx}}
                 <td></td>
@@ -43,31 +44,45 @@
         </tr>
     </table>
 
-    <h3>Miner reward transaction</h3>
+    <h3>Block level transactions</h3>
     <table class="center">
+      <thead>
         <tr>
-            <td>hash</td>
-            <td>outputs</td>
-            <td>size [kB]</td>
-            <td>version</td>
+          <td width="10%">type</td>
+          <td>hash</td>
+          <td>outputs</td>
+          <td>size [kB]</td>
+          <td>version</td>
         </tr>
+      </thead>
+      <tbody>
         {{#coinbase_txs}}
-            <tr>
-                <td><a href="/tx/{{hash}}">{{hash}}</a>
-                <td>{{sum_outputs}}</td>
-                <td>{{tx_size}}</td>
-                <td>{{version}}</td>
-            </tr>
+        <tr>
+          <td>{{tx_type}}</td>
+          <td><a href="/tx/{{hash}}">{{hash}}</a>
+          <td>{{sum_outputs}}</td>
+          <td>{{tx_size}}</td>
+          <td>{{version}}</td>
+        </tr>
         {{/coinbase_txs}}
-
+        {{#protocol_txs}}
+        <tr>
+          <td>{{tx_type}}</td>
+          <td><a href="/tx/{{hash}}">{{hash}}</a>
+          <td>{{sum_outputs}}</td>
+          <td>{{tx_size}}</td>
+          <td>{{version}}</td>
+        </tr>
+        {{/protocol_txs}}
+      </tbody>
     </table>
-
 
 
     <h3>Transactions ({{no_txs}})</h3>
     {{#have_txs}}
         <table class="center" style="width:80%">
             <tr>
+                <td>type</td>
                 <td>hash</td>
                 <td>outputs</td>
                 <td>fee [&#181;&#x271]</td>
@@ -76,14 +91,15 @@
                 <td>version</td>
             </tr>
             {{#blk_txs}}
-                <tr>
-                    <td><a href="/tx/{{hash}}">{{hash}}</a></td>
-                    <td>{{sum_outputs}}</td>
-                    <td>{{fee_micro}}</td>
-                    <td>{{no_inputs}}/{{no_outputs}}</td>                    
-                    <td>{{tx_size}}</td>
-                    <td>{{version}}</td>
-                </tr>
+            <tr>
+                <td>{{tx_type}}</td>
+                <td><a href="/tx/{{hash}}">{{hash}}</a></td>
+                <td>{{sum_outputs}}</td>
+                <td>{{fee_micro}}</td>
+                <td>{{no_inputs}}/{{no_outputs}}</td>                    
+                <td>{{tx_size}}</td>
+                <td>{{version}}</td>
+            </tr>
             {{/blk_txs}}
         </table>
     {{/have_txs}}    
