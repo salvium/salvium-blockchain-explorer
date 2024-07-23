@@ -1,4 +1,4 @@
-# Onion Monero Blockchain Explorer
+# Salvium Blockchain Explorer
 
 Currently available Monero blockchain explorers have several limitations which are of
 special importance to privacy-oriented users:
@@ -187,33 +187,33 @@ The explorer can also be built and run using Docker Compose, i.e.:
 version: '3'
 services:
   monerod:
-    image: sethsimmons/simple-monerod:latest
+    image: sethsimmons/simple-salviumd:latest
     restart: unless-stopped
-    container_name: monerod
+    container_name: salviumd
     volumes:
-      - xmrdata:/home/monero/.bitmonero
+      - xmrdata:/home/salvium/.salvium
     ports:
-      - 18080:18080
-      - 18089:18089
+      - 19080:19080
+      - 19089:19089
     depends_on:
         - explore
     command:
       - "--rpc-restricted-bind-ip=0.0.0.0"
-      - "--rpc-restricted-bind-port=18089"
+      - "--rpc-restricted-bind-port=19089"
       - "--public-node"
       - "--no-igd"
       - "--enable-dns-blocklist"
 
   explore:
     image: xmrblocks:latest
-    build: ./onion-monero-blockchain-explorer
+    build: ./salvium-blockchain-explorer
     container_name: explore
     restart: unless-stopped
     volumes:
-      - xmrdata:/home/monero/.bitmonero
+      - xmrdata:/home/salvium/.salvium
     ports:
-      - 8081:8081
-    command: ["./xmrblocks --daemon-url=monerod:18089 --enable-json-api --enable-autorefresh-option --enable-emission-monitor --enable-pusher"]
+      - 9081:9081
+    command: ["./xmrblocks --daemon-url=salviumd:19089 --enable-json-api --enable-autorefresh-option --enable-emission-monitor --enable-pusher"]
 
 volumes:
   xmrdata:
@@ -222,14 +222,14 @@ volumes:
 To build this image, run the following:
 
 ```bash
-git clone https://github.com/moneroexamples/onion-monero-blockchain-explorer.git
+git clone https://github.com/salvium/salvium-blockchain-explorer.git
 docker-compose build
 ```
 
 Or build and run in one step via:
 
 ```bash
-git clone https://github.com/moneroexamples/onion-monero-blockchain-explorer.git
+git clone https://github.com/salvium/salvium-blockchain-explorer.git
 docker-compose up -d
 ```
 
@@ -287,7 +287,7 @@ xmrblocks, Onion Monero Blockchain Explorer:
                                         functionality
   --ssl-key-file arg                    path to key file for ssl (https)
                                         functionality
-  -d [ --daemon-url ] arg (=http:://127.0.0.1:18081)
+  -d [ --daemon-url ] arg (=http:://127.0.0.1:19081)
                                         Monero daemon url
   --daemon-login arg                    Specify username[:password] for daemon 
                                         RPC client
@@ -298,27 +298,27 @@ Example usage, defined as bash aliases.
 
 ```bash
 # for mainnet explorer
-alias xmrblocksmainnet='~/onion-monero-blockchain-explorer/build/xmrblocks    --port 8081 --testnet-url "http://139.162.32.245:8082" --enable-pusher --enable-emission-monitor'
+alias xmrblocksmainnet='~/onion-monero-blockchain-explorer/build/xmrblocks    --port 9081 --testnet-url "http://139.162.32.245:9082" --enable-pusher --enable-emission-monitor'
 
 # for testnet explorer
-alias xmrblockstestnet='~/onion-monero-blockchain-explorer/build/xmrblocks -t --port 8082 --mainnet-url "http://139.162.32.245:8081" --enable-pusher --enable-emission-monitor'
+alias xmrblockstestnet='~/onion-monero-blockchain-explorer/build/xmrblocks -t --port 9082 --mainnet-url "http://139.162.32.245:9081" --enable-pusher --enable-emission-monitor'
 ```
 
 Example usage when running via Docker:
 
 ```bash
 # Run in foreground
-docker run -it -v <path-to-monero-blockckain-on-the-host>:/home/monero/.bitmonero -p 8081:8081  xmrblocks "./xmrblocks --daemon-url=node.sethforprivacy.com:18089 --enable-json-api --enable-autorefresh-option --enable-emission-monitor --enable-pusher"
+docker run -it -v <path-to-salvium-blockckain-on-the-host>:/home/salvium/.salvium -p 9081:9081  xmrblocks "./xmrblocks --daemon-url=node.sethforprivacy.com:19089 --enable-json-api --enable-autorefresh-option --enable-emission-monitor --enable-pusher"
 
 # Run in background
-docker run -it -d -v <path-to-monero-blockchain-on-the-host>:/home/monero/.bitmonero -p 8081:8081  xmrblocks "./xmrblocks --daemon-url=node.sethforprivacy.com:18089 --enable-json-api --enable-autorefresh-option --enable-emission-monitor --enable-pusher"
+docker run -it -d -v <path-to-salvium-blockchain-on-the-host>:/home/salvium/.salvium -p 9081:9081  xmrblocks "./xmrblocks --daemon-url=node.sethforprivacy.com:19089 --enable-json-api --enable-autorefresh-option --enable-emission-monitor --enable-pusher"
 ```
 
 Make sure to always start the portion of command line flags with `./xmrblocks` and set any flags you would like after that, as shown above.
 
 ## Enable Monero emission
 
-Obtaining current Monero emission amount is not straight forward. Thus, by default it is
+Obtaining current Salvium emission amount is not straight forward. Thus, by default it is
 disabled. To enable it use `--enable-emission-monitor` flag, e.g.,
 
 
@@ -330,10 +330,10 @@ This flag will enable emission monitoring thread. When started, the thread
  will initially scan the entire blockchain, and calculate the cumulative emission based on each block.
 Since it is a separate thread, the explorer will work as usual during this time.
 Every 10000 blocks, the thread will save current emission in a file, by default,
- in `~/.bitmonero/lmdb/emission_amount.txt`. For testnet or stagenet networks,
- it is `~/.bitmonero/testnet/lmdb/emission_amount.txt` or `~/.bitmonero/stagenet/lmdb/emission_amount.txt`. This file is used so that we don't
+ in `~/.salvium/lmdb/emission_amount.txt`. For testnet or stagenet networks,
+ it is `~/.salvium/testnet/lmdb/emission_amount.txt` or `~/.salvium/stagenet/lmdb/emission_amount.txt`. This file is used so that we don't
  need to rescan entire blockchain whenever the explorer is restarted. When the
- explorer restarts, the thread will first check if `~/.bitmonero/lmdb/emission_amount.txt`
+ explorer restarts, the thread will first check if `~/.salvium/lmdb/emission_amount.txt`
  is present, read its values, and continue from there if possible. Subsequently, only the initial
  use of the thread is time consuming. Once the thread scans the entire blockchain, it updates
  the emission amount using new blocks as they come. Since the explorer writes this file, there can
@@ -350,7 +350,7 @@ Every 10000 blocks, the thread will save current emission in a file, by default,
 Monero emission (fees) is 14485540.430 (52545.373) as of 1313448 block
 ```
 
-The values given, can be checked using Monero daemon's  `print_coinbase_tx_sum` command.
+The values given, can be checked using Salvium daemon's  `print_coinbase_tx_sum` command.
 For example, for the above example: `print_coinbase_tx_sum 0 1313449`.
 
 To disable the monitor, simply restart the explorer without `--enable-emission-monitor` flag.
@@ -390,7 +390,7 @@ By default the api is disabled. To enable it, use `--enable-json-api` flag, e.g.
 #### api/transaction/<tx_hash>
 
 ```bash
-curl  -w "\n" -X GET "http://127.0.0.1:8081/api/transaction/6093260dbe79fd6277694d14789dc8718f1bd54457df8bab338c2efa3bb0f03d"
+curl  -w "\n" -X GET "http://127.0.0.1:9081/api/transaction/6093260dbe79fd6277694d14789dc8718f1bd54457df8bab338c2efa3bb0f03d"
 ```
 
 Partial results shown:
@@ -455,7 +455,7 @@ Transactions in last 25 blocks
 
 
 ```bash
-curl  -w "\n" -X GET "http://127.0.0.1:8081/api/transactions"
+curl  -w "\n" -X GET "http://127.0.0.1:9081/api/transactions"
 ```
 
 Partial results shown:
@@ -514,7 +514,7 @@ Result analogical to the one above.
 
 
 ```bash
-curl  -w "\n" -X GET "http://139.162.32.245:8081/api/block/1293257"
+curl  -w "\n" -X GET "http://139.162.32.245:9081/api/block/1293257"
 ```
 
 Partial results shown:
@@ -555,7 +555,7 @@ Partial results shown:
 Return all txs in the mempool.
 
 ```bash
-curl  -w "\n" -X GET "http://127.0.0.1:8081/api/mempool"
+curl  -w "\n" -X GET "http://127.0.0.1:9081/api/mempool"
 ```
 
 Partial results shown:
@@ -598,7 +598,7 @@ if no specific limit given.
 Return number of newest mempool txs, e.g., only 10.
 
 ```bash
-curl  -w "\n" -X GET "http://127.0.0.1:8081/api/mempool?limit=10"
+curl  -w "\n" -X GET "http://127.0.0.1:9081/api/mempool?limit=10"
 ```
 
 Result analogical to the one above.
@@ -606,7 +606,7 @@ Result analogical to the one above.
 #### api/search/<block_number|tx_hash|block_hash>
 
 ```bash
-curl  -w "\n" -X GET "http://127.0.0.1:8081/api/search/1293669"
+curl  -w "\n" -X GET "http://127.0.0.1:9081/api/search/1293669"
 ```
 
 Partial results shown:
@@ -654,7 +654,7 @@ Checking outputs:
 
 ```bash
 # we use here official Monero project's donation address as an example
-curl  -w "\n" -X GET "http://127.0.0.1:8081/api/outputs?txhash=17049bc5f2d9fbca1ce8dae443bbbbed2fc02f1ee003ffdd0571996905faa831&address=44AFFq5kSiGBoZ4NMDwYtN18obc8AemS33DBLWs3H7otXft3XjrpDtQGv7SqSsaBYBb98uNbr2VBBEt7f2wfn3RVGQBEP3A&viewkey=f359631075708155cc3d92a32b75a7d02a5dcf27756707b47a2b31b21c389501&txprove=0"
+curl  -w "\n" -X GET "http://127.0.0.1:9081/api/outputs?txhash=17049bc5f2d9fbca1ce8dae443bbbbed2fc02f1ee003ffdd0571996905faa831&address=44AFFq5kSiGBoZ4NMDwYtN18obc8AemS33DBLWs3H7otXft3XjrpDtQGv7SqSsaBYBb98uNbr2VBBEt7f2wfn3RVGQBEP3A&viewkey=f359631075708155cc3d92a32b75a7d02a5dcf27756707b47a2b31b21c389501&txprove=0"
 ```
 
 ```json
@@ -690,7 +690,7 @@ For the viewkey, we use `tx_private_key` (although the GET variable is still cal
 
 ```bash
 # this is for testnet transaction
-curl  -w "\n" -X GET "http://127.0.0.1:8082/api/outputs?txhash=94782a8c0aa8d8768afa0c040ef0544b63eb5148ca971a024ac402cad313d3b3&address=9wUf8UcPUtb2huK7RphBw5PFCyKosKxqtGxbcKBDnzTCPrdNfJjLjtuht87zhTgsffCB21qmjxjj18Pw7cBnRctcKHrUB7N&viewkey=e94b5bfc599d2f741d6f07e3ab2a83f915e96fb374dfb2cd3dbe730e34ecb40b&txprove=1"
+curl  -w "\n" -X GET "http://127.0.0.1:9082/api/outputs?txhash=94782a8c0aa8d8768afa0c040ef0544b63eb5148ca971a024ac402cad313d3b3&address=9wUf8UcPUtb2huK7RphBw5PFCyKosKxqtGxbcKBDnzTCPrdNfJjLjtuht87zhTgsffCB21qmjxjj18Pw7cBnRctcKHrUB7N&viewkey=e94b5bfc599d2f741d6f07e3ab2a83f915e96fb374dfb2cd3dbe730e34ecb40b&txprove=1"
 ```
 
 ```json
@@ -725,7 +725,7 @@ Result analogical to the one above.
 #### api/networkinfo
 
 ```bash
-curl  -w "\n" -X GET "http://127.0.0.1:8081/api/networkinfo"
+curl  -w "\n" -X GET "http://127.0.0.1:9081/api/networkinfo"
 ```
 
 ```json
@@ -762,7 +762,7 @@ Search for our outputs in last few blocks (up to 5 blocks), using provided addre
 
 ```bash
 # testnet address
-curl  -w "\n" -X GET http://127.0.0.1:8081/api/outputsblocks?address=9sDyNU82ih1gdhDgrqHbEcfSDFASjFgxL9B9v5f1AytFUrYsVEj7bD9Pyx5Sw2qLk8HgGdFM8qj5DNecqGhm24Ce6QwEGDi&viewkey=807079280293998634d66e745562edaaca45c0a75c8290603578b54e9397e90a&limit=5&mempool=1
+curl  -w "\n" -X GET http://127.0.0.1:9081/api/outputsblocks?address=9sDyNU82ih1gdhDgrqHbEcfSDFASjFgxL9B9v5f1AytFUrYsVEj7bD9Pyx5Sw2qLk8HgGdFM8qj5DNecqGhm24Ce6QwEGDi&viewkey=807079280293998634d66e745562edaaca45c0a75c8290603578b54e9397e90a&limit=5&mempool=1
 ```
 
 Example result:

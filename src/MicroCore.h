@@ -28,8 +28,7 @@ namespace xmreg
 
         string blockchain_path;
 
-        tx_memory_pool m_mempool;
-        Blockchain m_blockchain_storage;
+        std::unique_ptr<BlockchainAndPool> core_storage;
 
         hw::device* m_device;
 
@@ -49,6 +48,9 @@ namespace xmreg
 
         bool
         get_block_by_height(const uint64_t& height, block& blk);
+
+        bool
+        get_blocks_by_heights(const vector<uint64_t>& heights, vector<block>& blocks);
 
         bool
         get_tx(const crypto::hash& tx_hash, transaction& tx);
