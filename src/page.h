@@ -64,6 +64,7 @@ extern  __thread randomx_vm *main_vm_full;
 #define TMPL_BLOCK                  TMPL_DIR "/block.html"
 #define TMPL_RANDOMX                TMPL_DIR "/randomx.html"
 #define TMPL_TX                     TMPL_DIR "/tx.html"
+#define TMPL_SUPPLY                 TMPL_DIR "/supply.html"
 #define TMPL_ADDRESS                TMPL_DIR "/address.html"
 #define TMPL_MY_OUTPUTS             TMPL_DIR "/my_outputs.html"
 #define TMPL_SEARCH_RESULTS         TMPL_DIR "/search_results.html"
@@ -564,6 +565,7 @@ page(MicroCore* _mcore,
     template_file["block"]           = get_full_page(xmreg::read(TMPL_BLOCK));
     template_file["randomx"]         = get_full_page(xmreg::read(TMPL_RANDOMX));
     template_file["tx"]              = get_full_page(xmreg::read(TMPL_TX));
+    template_file["supply"]          = get_full_page(xmreg::read(TMPL_SUPPLY));
     template_file["my_outputs"]      = get_full_page(xmreg::read(TMPL_MY_OUTPUTS));
     template_file["rawtx"]           = get_full_page(xmreg::read(TMPL_MY_RAWTX));
     template_file["checkrawtx"]      = get_full_page(xmreg::read(TMPL_MY_CHECKRAWTX));
@@ -853,6 +855,34 @@ index2(uint64_t page_no = 0, bool refresh_page = false)
     // render the page
     return mstch::render(template_file["index2"], context);
 }
+
+/**
+ * Render the circulating supply information
+ */
+string
+circulating_supply()
+{
+  mstch::map context {};
+  context.emplace("currencies" , mstch::array());
+
+  // get reference to supply map to be field below
+  mstch::array& supply_map = boost::get<mstch::array>(context["currencies"]);
+  map<string, uint64_t> supply = CurrentBlockchainStatus::get_circulating_supply();
+  for (auto currency: supply) {
+    cerr << currency.first << ":" << currency.second << endl;
+    supply_map.push_back(mstch::map {
+        {"currency_label", currency.first},
+        {"amount", xmr_amount_to_str(currency.second, "{:0.3f}")}
+      });
+  }
+  
+  // this is when mempool is on its own page, /mempool
+  add_css_style(context);
+  
+  // render the page
+  return mstch::render(template_file["supply"], context);
+}
+
 
 /**
  * Render mempool data
@@ -1925,7 +1955,7 @@ show_my_outputs(string tx_hash_str,
 
     if (xmr_address_str.empty())
     {
-        return string("Monero address not provided!");
+        return string("Salvium address not provided!");
     }
 
     if (viewkey_str.empty())
@@ -5310,7 +5340,7 @@ json_outputs(string tx_hash_str,
     if (address_str.empty())
     {
         j_response["status"]  = "error";
-        j_response["message"] = "Monero address not provided";
+        j_response["message"] = "Salvium address not provided";
         return j_response;
     }
 
@@ -5550,7 +5580,7 @@ json_outputsblocks(string _limit,
     if (address_str.empty())
     {
         j_response["status"]  = "error";
-        j_response["message"] = "Monero address not provided";
+        j_response["message"] = "Salvium address not provided";
         return j_response;
     }
 
@@ -5787,6 +5817,31 @@ json_emission()
     j_response["status"]  = "success";
 
     return j_response;
+}
+
+
+/*
+* Lets use this json api convention for success and error
+* https://labs.omniti.com/labs/jsend
+*/
+json
+json_supply()
+{
+  json j_response {
+    {"status", "fail"},
+    {"data",   json {}}
+  };
+  
+  json& j_data = j_response["data"];
+  
+  map<string, uint64_t> supply = CurrentBlockchainStatus::get_circulating_supply();
+  for(const auto& currency: supply) {
+    j_data[currency.first] = currency.second;
+  }
+
+  j_response["status"]  = "success";
+  
+  return j_response;
 }
 
 

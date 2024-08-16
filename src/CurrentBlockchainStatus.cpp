@@ -291,6 +291,12 @@ CurrentBlockchainStatus::get_emission()
     return current_emission;
 }
 
+map<string, uint64_t>
+CurrentBlockchainStatus::get_circulating_supply()
+{
+  return core_storage->get_db().get_circulating_supply();
+}
+
 bool
 CurrentBlockchainStatus::is_thread_running()
 {

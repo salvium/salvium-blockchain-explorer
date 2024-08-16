@@ -71,6 +71,7 @@ struct CurrentBlockchainStatus
 
     static atomic<Emission> total_emission_atomic;
 
+    map<string, int64_t> total_circulating_supply;
 
     static boost::thread m_thread;
 
@@ -104,6 +105,9 @@ struct CurrentBlockchainStatus
 
     static Emission
     get_emission();
+  
+    static map<string, uint64_t>
+    get_circulating_supply();
   
     static bf::path
     get_output_file_path();
