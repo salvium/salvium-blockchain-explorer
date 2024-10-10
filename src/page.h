@@ -5825,7 +5825,7 @@ json_emission()
 * https://labs.omniti.com/labs/jsend
 */
 json
-json_supply()
+json_supply(string mode)
 {
   json j_response {
     {"status", "fail"},
@@ -5833,10 +5833,30 @@ json_supply()
   };
   
   json& j_data = j_response["data"];
-  
+
+  if (!CurrentBlockchainStatus::is_thread_running()) {
+    j_data["error"] = "Emission/supply monitoring thread not enabled.";
+    return j_response;
+  }
+
   map<string, uint64_t> supply = CurrentBlockchainStatus::get_circulating_supply();
-  for(const auto& currency: supply) {
-    j_data[currency.first] = currency.second;
+  if (mode == "total" || mode == "TOTAL") {
+    j_data["mode"] = "total";
+    j_data["amount"] = xmr_amount_to_str(supply["SAL"] + supply["STAKE"], "{:0.8f}");
+  } else if (mode == "supply" || mode == "SUPPLY") {
+    j_data["mode"] = "supply";
+    j_data["amount"] = xmr_amount_to_str(supply["SAL"], "{:0.8f}");
+  } else if (mode == "staked" || mode == "STAKED") {
+    j_data["mode"] = "staked";
+    j_data["amount"] = xmr_amount_to_str(supply["STAKE"], "{:0.8f}");
+  } else if (mode == "burnt" || mode == "BURNT") {
+    j_data["mode"] = "burnt";
+    j_data["amount"] = xmr_amount_to_str(supply["BURN"], "{:0.8f}");
+  } else {
+    j_data["mode"] = "all";
+    for(const auto& currency: supply) {
+      j_data[currency.first] = xmr_amount_to_str(currency.second, "{:0.8f}");
+    }
   }
 
   j_response["status"]  = "success";

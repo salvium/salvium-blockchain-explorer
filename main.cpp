@@ -761,10 +761,13 @@ main(int ac, const char* av[])
             return r;
         });
 
-        CROW_ROUTE(app, "/api/supply")
-        ([&]() {
+        CROW_ROUTE(app, "/api/supply").methods("GET"_method)
+          ([&](const crow::request &req) {
 
-            myxmr::jsonresponse r{xmrblocks.json_supply()};
+            string mode = regex_search(req.raw_url, regex {"mode=\\w+"}) ?
+              req.url_params.get("mode") : "";
+            
+            myxmr::jsonresponse r{xmrblocks.json_supply(remove_bad_chars(mode))};
 
             return r;
         });
