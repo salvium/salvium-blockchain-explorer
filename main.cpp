@@ -593,7 +593,6 @@ main(int ac, const char* av[])
         });
     }
 
-
     if (enable_output_key_checker)
     {
         CROW_ROUTE(app, "/rawoutputkeys")
@@ -645,6 +644,11 @@ main(int ac, const char* av[])
     CROW_ROUTE(app, "/txpool")
     ([&]() {
         return myxmr::htmlresponse(xmrblocks.mempool(true));
+    });
+
+    CROW_ROUTE(app, "/total_supply")
+    ([&]() {
+        return myxmr::htmlresponse(xmrblocks.total_supply());
     });
 
 //    CROW_ROUTE(app, "/altblocks")
@@ -768,7 +772,7 @@ main(int ac, const char* av[])
               req.url_params.get("mode") : "";
             
             myxmr::jsonresponse r{xmrblocks.json_supply(remove_bad_chars(mode))};
-
+            
             return r;
         });
 
