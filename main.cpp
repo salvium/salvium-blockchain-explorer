@@ -646,9 +646,13 @@ main(int ac, const char* av[])
         return myxmr::htmlresponse(xmrblocks.mempool(true));
     });
 
-    CROW_ROUTE(app, "/total_supply")
-    ([&]() {
-        return myxmr::htmlresponse(xmrblocks.total_supply());
+    CROW_ROUTE(app, "/supply").methods("GET"_method)
+    ([&](const crow::request& req) {
+      
+      string mode = regex_search(req.raw_url, regex {"mode=\\w+"}) ?
+        req.url_params.get("mode") : "total";
+            
+      return myxmr::htmlresponse(xmrblocks.supply(remove_bad_chars(mode)));
     });
 
 //    CROW_ROUTE(app, "/altblocks")

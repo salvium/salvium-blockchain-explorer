@@ -4445,14 +4445,17 @@ get_js_file(string const& fname)
 }
 
 
-string total_supply()
+string supply(string mode)
 {
   if (!CurrentBlockchainStatus::is_thread_running()) {
     return "Error - emission/supply monitoring thread not enabled.";
   }
 
   map<string, uint64_t> supply = CurrentBlockchainStatus::get_circulating_supply();
-  return xmr_amount_to_str(supply["SAL"] + supply["STAKE"], "{:0.8f}");
+  if (mode == "circulating")
+    return xmr_amount_to_str(supply["SAL"], "{:0.8f}");
+  else
+    return xmr_amount_to_str(supply["SAL"] + supply["STAKE"], "{:0.8f}");
 }
 
 
