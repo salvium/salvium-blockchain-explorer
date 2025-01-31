@@ -244,9 +244,9 @@ get_default_lmdb_folder(cryptonote::network_type nettype)
     string default_monero_dir = tools::get_default_data_dir();
 
     if (nettype == cryptonote::network_type::TESTNET)
-        default_monero_dir += "/testnet";
+      default_monero_dir += "/testnet/" + to_string(TESTNET_VERSION);
     if (nettype == cryptonote::network_type::STAGENET)
-        default_monero_dir += "/stagenet";
+      default_monero_dir += "/stagenet/" + to_string(TESTNET_VERSION);
 
 
     // the default folder of the lmdb blockchain database
@@ -955,6 +955,7 @@ decode_ringct(rct::rctSig const& rv,
             case rct::RCTTypeCLSAG:
             case rct::RCTTypeBulletproofPlus:
             case rct::RCTTypeFullProofs:
+            case rct::RCTTypeSalviumOne:
                 amount = rct::decodeRctSimple(rv,
                                               rct::sk2rct(scalar1),
                                               i,

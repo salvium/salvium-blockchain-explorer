@@ -419,6 +419,7 @@ struct tx_details
       else if (tx_type == cryptonote::transaction_type::BURN) return "BURN";
       else if (tx_type == cryptonote::transaction_type::CONVERT) return "CONVERT";
       else if (tx_type == cryptonote::transaction_type::STAKE) return "STAKE";
+      else if (tx_type == cryptonote::transaction_type::AUDIT) return "AUDIT";
       return "-";
     }
 
