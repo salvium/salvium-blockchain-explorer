@@ -1535,9 +1535,9 @@ show_ringmembers_hex(string const& tx_hash_str)
     for (txin_to_key const& in_key: input_key_imgs)
     {      
         // get absolute offsets of mixins
-        std::vector<uint64_t> absolute_offsets
-                = cryptonote::relative_output_offsets_to_absolute(
-                        in_key.key_offsets);
+        std::vector<uint64_t> asset_offsets = cryptonote::relative_output_offsets_to_absolute(in_key.key_offsets);
+        std::vector<uint64_t> absolute_offsets;
+        core_storage->get_db().get_output_id_from_asset_type_output_index(in_key.asset_type, asset_offsets, absolute_offsets);
 
         // get public keys of outputs used in the mixins that
         // match to the offests
@@ -1609,9 +1609,9 @@ show_ringmemberstx_hex(string const& tx_hash_str)
     for (txin_to_key const& in_key: input_key_imgs)
     {
         // get absolute offsets of mixins
-        std::vector<uint64_t> absolute_offsets
-                = cryptonote::relative_output_offsets_to_absolute(
-                        in_key.key_offsets);
+        std::vector<uint64_t> asset_offsets = cryptonote::relative_output_offsets_to_absolute(in_key.key_offsets);
+        std::vector<uint64_t> absolute_offsets;
+        core_storage->get_db().get_output_id_from_asset_type_output_index(in_key.asset_type, asset_offsets, absolute_offsets);
 
         //tx_out_index is pair::<transaction hash, output index>
         vector<tx_out_index> indices;
@@ -1830,9 +1830,9 @@ show_ringmemberstx_jsonhex(string const& tx_hash_str)
     for (txin_to_key const& in_key: input_key_imgs)
     {
         // get absolute offsets of mixins
-        std::vector<uint64_t> absolute_offsets
-                = cryptonote::relative_output_offsets_to_absolute(
-                        in_key.key_offsets);
+        std::vector<uint64_t> asset_offsets = cryptonote::relative_output_offsets_to_absolute(in_key.key_offsets);
+        std::vector<uint64_t> absolute_offsets;
+        core_storage->get_db().get_output_id_from_asset_type_output_index(in_key.asset_type, asset_offsets, absolute_offsets);
 
         //tx_out_index is pair::<transaction hash, output index>
         vector<tx_out_index> indices;
@@ -2374,9 +2374,9 @@ show_my_outputs(string tx_hash_str,
         for (const txin_to_key& in_key: input_key_imgs)
         {
             // get absolute offsets of mixins
-            std::vector<uint64_t> absolute_offsets
-                    = cryptonote::relative_output_offsets_to_absolute(
-                            in_key.key_offsets);
+            std::vector<uint64_t> asset_offsets = cryptonote::relative_output_offsets_to_absolute(in_key.key_offsets);
+            std::vector<uint64_t> absolute_offsets;
+            core_storage->get_db().get_output_id_from_asset_type_output_index(in_key.asset_type, asset_offsets, absolute_offsets);
 
             // get public keys of outputs used in the mixins that match to the offests
             std::vector<cryptonote::output_data_t> mixin_outputs;
@@ -4553,9 +4553,9 @@ json_transaction(string tx_hash_str)
     {
 
         // get absolute offsets of mixins
-        std::vector<uint64_t> absolute_offsets
-                = cryptonote::relative_output_offsets_to_absolute(
-                        in_key.key_offsets);
+        std::vector<uint64_t> asset_offsets = cryptonote::relative_output_offsets_to_absolute(in_key.key_offsets);
+        std::vector<uint64_t> absolute_offsets;
+        core_storage->get_db().get_output_id_from_asset_type_output_index(in_key.asset_type, asset_offsets, absolute_offsets);
 
         // get public keys of outputs used in the mixins that match to the offests
         std::vector<output_data_t> outputs;
@@ -6322,9 +6322,9 @@ construct_tx_context(transaction tx, uint16_t with_ring_signatures = 0)
             break;
 
         // get absolute offsets of mixins
-        std::vector<uint64_t> absolute_offsets
-                = cryptonote::relative_output_offsets_to_absolute(
-                        in_key.key_offsets);
+        std::vector<uint64_t> asset_offsets = cryptonote::relative_output_offsets_to_absolute(in_key.key_offsets);
+        std::vector<uint64_t> absolute_offsets;
+        core_storage->get_db().get_output_id_from_asset_type_output_index(in_key.asset_type, asset_offsets, absolute_offsets);
 
         // get public keys of outputs used in the mixins that match to the offests
         std::vector<cryptonote::output_data_t> outputs;
