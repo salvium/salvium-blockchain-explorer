@@ -4454,9 +4454,9 @@ string supply(string mode)
 
   map<string, uint64_t> supply = CurrentBlockchainStatus::get_circulating_supply();
   if (mode == "circulating")
-    return xmr_amount_to_str(supply["SAL"], "{:0.8f}");
+    return xmr_amount_to_str(supply["SAL1"], "{:0.8f}");
   else
-    return xmr_amount_to_str(supply["SAL"] + supply["STAKE"], "{:0.8f}");
+    return xmr_amount_to_str(supply["SAL1"] + supply["STAKE"], "{:0.8f}");
 }
 
 
@@ -5855,10 +5855,10 @@ json_supply(string mode)
   map<string, uint64_t> supply = CurrentBlockchainStatus::get_circulating_supply();
   if (mode == "total" || mode == "TOTAL") {
     j_data["mode"] = "total";
-    j_data["amount"] = xmr_amount_to_str(supply["SAL"] + supply["STAKE"], "{:0.8f}");
+    j_data["amount"] = xmr_amount_to_str(supply["SAL1"] + supply["STAKE"], "{:0.8f}");
   } else if (mode == "supply" || mode == "SUPPLY") {
     j_data["mode"] = "supply";
-    j_data["amount"] = xmr_amount_to_str(supply["SAL"], "{:0.8f}");
+    j_data["amount"] = xmr_amount_to_str(supply["SAL1"], "{:0.8f}");
   } else if (mode == "staked" || mode == "STAKED") {
     j_data["mode"] = "staked";
     j_data["amount"] = xmr_amount_to_str(supply["STAKE"], "{:0.8f}");
@@ -6285,6 +6285,11 @@ construct_tx_context(transaction tx, uint16_t with_ring_signatures = 0)
 
     string server_time_str = xmreg::timestamp_to_str_gm(server_timestamp, "%F");
 
+    string asset_type = "SAL1";
+    if (txd.input_key_imgs.size()) {
+      asset_type = tx.source_asset_type;
+    }
+    
     mstch::array inputs = mstch::array{};
 
     uint64_t input_idx {0};
@@ -6536,6 +6541,7 @@ construct_tx_context(transaction tx, uint16_t with_ring_signatures = 0)
     context["have_any_unknown_amount"]  = have_any_unknown_amount;
     context["inputs_xmr_sum_not_zero"]  = (inputs_xmr_sum > 0);
     context["inputs_xmr_sum"]           = xmreg::xmr_amount_to_str(inputs_xmr_sum);
+    context["asset_type"]               = asset_type;
     context["server_time"]              = server_time_str;
     context["enable_mixins_details"]    = detailed_view;
     context["enable_as_hex"]            = enable_as_hex;
