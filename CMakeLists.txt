@@ -13,6 +13,8 @@ if (WIN32)
 endif()
 
 set(MONERO_DIR $ENV{MONERO_DIR})
+set(MONERO_SOURCE_DIR ${MONERO_DIR})
+set(MONERO_BUILD_DIR ${MONERO_SOURCE_DIR}/build/release)
     
 if (NOT MONERO_DIR)
 #    set(MONERO_DIR ~/monero)
@@ -144,6 +146,8 @@ set(LIBRARIES
         mstch
         wallet
         cryptonote_core
+        carrot_core
+        carrot_impl
         cryptonote_basic
         cryptonote_protocol
         cryptonote_format_utils_basic
@@ -167,11 +171,11 @@ set(LIBRARIES
         epee
         hardforks
         randomx
+        mx25519
         sodium
         ${Boost_LIBRARIES}
         pthread
         unbound
-        curl
         crypto
         ssl)
 

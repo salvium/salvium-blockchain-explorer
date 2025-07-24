@@ -3248,13 +3248,18 @@ show_checkrawtx(string raw_tx_data, string action)
             vector<uint64_t> real_ammounts;
             uint64_t outputs_xmr_sum {0};
 
-            // destiantion address for this tx
-            for (tx_destination_entry& a_dest: ptx.construction_data.splitted_dsts)
-            {
+            if (std::holds_alternative<tools::wallet2::tx_construction_data>(ptx.construction_data)) {
+
+              // PRE-CARROT
+              tools::wallet2::tx_construction_data cd = std::get<tools::wallet2::tx_construction_data>(ptx.construction_data);
+              
+              // destination address for this tx
+              for (tx_destination_entry& a_dest: cd.splitted_dsts)
+              {
                 //stealth_address_amount.insert({dest.addr, dest.amount});
                 //cout << get_account_address_as_str(testnet, a_dest.addr) << endl;
                 //address_amounts.push_back(a_dest.amount);
-
+                
                 destination_addresses.push_back(
                         mstch::map {
                                 {"dest_address"   , get_account_address_as_str(
@@ -3267,24 +3272,79 @@ show_checkrawtx(string raw_tx_data, string action)
                 outputs_xmr_sum += a_dest.amount;
 
                 real_ammounts.push_back(a_dest.amount);
-            }
+              }
 
-            // get change address and amount info
-            if (ptx.construction_data.change_dts.amount > 0)
-            {
+              // get change address and amount info
+              if (cd.change_dts.amount > 0)
+              {
                 destination_addresses.push_back(
                         mstch::map {
                                 {"dest_address"   , get_account_address_as_str(
-                                        nettype, ptx.construction_data.change_dts.is_subaddress, ptx.construction_data.change_dts.addr)},
+                                        nettype, cd.change_dts.is_subaddress, cd.change_dts.addr)},
                                 {"dest_amount"    ,
-                                        xmreg::xmr_amount_to_str(ptx.construction_data.change_dts.amount)},
+                                        xmreg::xmr_amount_to_str(cd.change_dts.amount)},
                                 {"is_this_change" , true}
                         }
                 );
 
-                real_ammounts.push_back(ptx.construction_data.change_dts.amount);
-            };
+                real_ammounts.push_back(cd.change_dts.amount);
+              };
 
+            } else {
+
+              // POST-CARROT
+              carrot::CarrotTransactionProposalV1 cd = std::get<carrot::CarrotTransactionProposalV1>(ptx.construction_data);
+              
+              for (carrot::CarrotPaymentProposalV1& a_dest: cd.normal_payment_proposals) {
+
+                cryptonote::account_public_address apa{a_dest.destination.address_spend_pubkey,
+                                                       a_dest.destination.address_view_pubkey,
+                                                       true};
+                
+                destination_addresses.push_back(
+                        mstch::map {
+                                {"dest_address"   ,
+                                 get_account_address_as_str(nettype,
+                                                            a_dest.destination.is_subaddress,
+                                                            apa,
+                                                            true)},
+                                {"dest_amount"    , xmreg::xmr_amount_to_str(a_dest.amount)},
+                                {"dest_asset_type", a_dest.asset_type},
+                                {"is_this_change" , false}
+                        }
+                );
+
+                outputs_xmr_sum += a_dest.amount;
+
+                real_ammounts.push_back(a_dest.amount);
+              }
+
+              for (carrot::CarrotPaymentProposalVerifiableSelfSendV1& a_self: cd.selfsend_payment_proposals) {
+
+                /*
+                cryptonote::account_public_address apa{a_self.destination.address_spend_pubkey,
+                                                       a_self.destination.address_view_pubkey,
+                                                       true};
+                */
+                destination_addresses.push_back(
+                        mstch::map {
+                                 {"dest_address"   , "-"},
+                                     /*
+                                 get_account_address_as_str(nettype,
+                                                            a_dest.destination.is_subaddress,
+                                                            apa,
+                                                            true)},*/
+                                {"dest_amount"    , xmreg::xmr_amount_to_str(a_self.proposal.amount)},
+                                {"dest_asset_type", "SAL1"},
+                                {"is_this_change" , true}
+                        }
+                );
+
+                real_ammounts.push_back(a_self.proposal.amount);
+              }
+              
+            }
+            
             tx_context["outputs_xmr_sum"] = xmreg::xmr_amount_to_str(outputs_xmr_sum);
 
             tx_context.insert({"dest_infos", destination_addresses});
@@ -3321,8 +3381,10 @@ show_checkrawtx(string raw_tx_data, string action)
 
             uint64_t inputs_xmr_sum {0};
 
-            for (const tx_source_entry&  tx_source: ptx.construction_data.sources)
-            {
+            std::string lambda_result = std::visit([&](const auto& cd) {
+
+              for (const tx_source_entry&  tx_source: cd.sources)
+              {
                 transaction real_source_tx;
 
                 uint64_t index_of_real_output = std::get<0>(tx_source.outputs[tx_source.real_output]);
@@ -3369,22 +3431,22 @@ show_checkrawtx(string raw_tx_data, string action)
                 real_amounts.push_back(tx_source.amount);
 
                 inputs_xmr_sum += tx_source.amount;
-            }
+              }
 
-            // mark that we have signed tx data for use in mstch
-            tx_context["have_raw_tx"] = true;
+              // mark that we have signed tx data for use in mstch
+              tx_context["have_raw_tx"] = true;
 
-            // provide total mount of inputs xmr
-            tx_context["inputs_xmr_sum"] = xmreg::xmr_amount_to_str(inputs_xmr_sum);
+              // provide total mount of inputs xmr
+              tx_context["inputs_xmr_sum"] = xmreg::xmr_amount_to_str(inputs_xmr_sum);
 
-            // get reference to inputs array created of the tx
-            mstch::array& inputs = boost::get<mstch::array>(tx_context["inputs"]);
+              // get reference to inputs array created of the tx
+              mstch::array& inputs = boost::get<mstch::array>(tx_context["inputs"]);
 
-            uint64_t input_idx {0};
+              uint64_t input_idx {0};
 
-            // mark which mixin is real in each input's mstch context
-            for (mstch::node& input_node: inputs)
-            {
+              // mark which mixin is real in each input's mstch context
+              for (mstch::node& input_node: inputs)
+              {
 
                 mstch::map& input_map = boost::get<mstch::map>(input_node);
 
@@ -3432,14 +3494,19 @@ show_checkrawtx(string raw_tx_data, string action)
                 }
 
                 ++input_idx;
-            }
+              }
 
-            // mark real mixing in the mixins timescale graph
-            mark_real_mixins_on_timescales(real_output_indices, tx_context);
+              // mark real mixing in the mixins timescale graph
+              mark_real_mixins_on_timescales(real_output_indices, tx_context);
+              
+              boost::get<mstch::array>(context["txs"]).push_back(tx_context);
 
-            boost::get<mstch::array>(context["txs"]).push_back(tx_context);
+              return std::string{};
+              
+            }, ptx.construction_data);
+
+            if (lambda_result != "") return lambda_result;
         }
-
     }
 
 
@@ -3922,11 +3989,11 @@ show_checkcheckrawoutput(string raw_data, string viewkey_str)
             reinterpret_cast<const account_public_address*>(
                     decoded_raw_data.data());
 
-    address_parse_info address_info {*xmr_address, false, false, crypto::null_hash8};
+    address_parse_info address_info {*xmr_address, false, false, false, crypto::null_hash8};
 
     context.insert({"address"        , REMOVE_HASH_BRAKETS(
             xmreg::print_address(address_info, nettype))});
-    context.insert({"viewkey"        , pod_to_hex(prv_view_key)});
+    context.insert({"viewkey"        , pod_to_hex(unwrap(unwrap(prv_view_key)))});
     context.insert({"has_total_xmr"  , false});
     context.insert({"total_xmr"      , string{}});
     context.insert({"output_keys"    , mstch::array{}});
@@ -5545,7 +5612,7 @@ json_outputs(string tx_hash_str,
     // matches to what was used to produce response.
     j_data["tx_hash"]  = pod_to_hex(txd.hash);
     j_data["address"]  = pod_to_hex(address_info.address);
-    j_data["viewkey"]  = pod_to_hex(prv_view_key);
+    j_data["viewkey"]  = pod_to_hex(unwrap(unwrap(prv_view_key)));
     j_data["tx_prove"] = tx_prove;
     j_data["tx_confirmations"] = txd.no_confirmations;
     j_data["tx_timestamp"] = tx_timestamp;
@@ -5729,7 +5796,7 @@ json_outputsblocks(string _limit,
     // check if submited data in the request
     // matches to what was used to produce response.
     j_data["address"]  = pod_to_hex(address_info.address);
-    j_data["viewkey"]  = pod_to_hex(prv_view_key);
+    j_data["viewkey"]  = pod_to_hex(unwrap(unwrap(prv_view_key)));
     j_data["limit"]    = _limit;
     j_data["height"]   = height;
     j_data["mempool"]  = in_mempool_aswell;

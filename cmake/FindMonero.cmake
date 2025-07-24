@@ -31,7 +31,7 @@
 set(LIBS common;blocks;cryptonote_basic;cryptonote_core;multisig;oracle;
 		cryptonote_protocol;daemonizer;mnemonics;epee;lmdb;device;wallet-crypto;
 		blockchain_db;ringct;wallet;cncrypto;easylogging;version;
-        checkpoints;randomx;hardforks;miniupnpc)
+        checkpoints;randomx;hardforks;miniupnpc;carrot_impl;carrot_core;mx25519)
 
 set(Xmr_INCLUDE_DIRS "${CPP_MONERO_DIR}")
 
@@ -45,7 +45,7 @@ foreach (l ${LIBS})
 	find_library(Xmr_${L}_LIBRARY
 		NAMES ${l}
 		PATHS ${CMAKE_LIBRARY_PATH}
-		PATH_SUFFIXES "/src/${l}" "/src/" "/external/db_drivers/lib${l}" "/lib" "/src/crypto" "/src/crypto/wallet" "/contrib/epee/src" "/external/easylogging++/" "/external/${l}" "external/miniupnp/miniupnpc"
+		PATH_SUFFIXES "/src/${l}" "/src/" "/external/db_drivers/lib${l}" "/lib" "/src/crypto" "/src/crypto/wallet" "/contrib/epee/src" "/external/easylogging++/" "/external/${l}" "external/miniupnp/miniupnpc"  "external/mx25519"
 		NO_DEFAULT_PATH
 	)
 
@@ -83,6 +83,7 @@ include_directories(
                 ${MONERO_SOURCE_DIR}/src/crypto
                 ${MONERO_SOURCE_DIR}/src/crypto/wallet
 		${MONERO_SOURCE_DIR}/external
+		${MONERO_SOURCE_DIR}/external/mx25519/include
 		${MONERO_SOURCE_DIR}/external/randomx/src
 		${MONERO_SOURCE_DIR}/build
 		${MONERO_SOURCE_DIR}/external/easylogging++
