@@ -1,59 +1,11 @@
 # Salvium Blockchain Explorer
 
-Currently available Monero blockchain explorers have several limitations which are of
-special importance to privacy-oriented users:
+This project is heavily based on the Onion Monero Blockchain Explorer. Our thanks to their
+team for such a robust project to use as a base.
 
- - they use JavaScript,
- - have images which might be used for [cookieless tracking](http://lucb1e.com/rp/cookielesscookies/),
- - track users activities through google analytics,
- - are closed sourced,
- - are not available as hidden services,
- - do not support Monero testnet nor stagenet networks,
- - have limited JSON API.
+## Explorer features
 
-
-In this example, these limitations are addressed by development of
-an Onion Monero Blockchain Explorer. The example not only shows how to use
-Monero C++ libraries, but also demonstrates how to use:
-
- - [crow](https://github.com/ipkn/crow) - C++ micro web framework
- - [mstch](https://github.com/no1msd/mstch) - C++ {{mustache}} templates
- - [json](https://github.com/nlohmann/json) - JSON for Modern C++
- - [fmt](https://github.com/fmtlib/fmt) - Small, safe and fast string formatting library
-
-## Explorer hosts
-
-Clearnet versions:
- - [https://xmrchain.net/](https://xmrchain.net/) - HTTPS enabled, most popular, and very stable.
- - [https://monerohash.com/explorer/](https://monerohash.com/explorer/) - nice looking one, HTTPS enabled.
- - [http://monerochain.com/](http://monerochain.com/) - JSON API based, multiple nodes.   
- - [https://blox.minexmr.com/](https://blox.minexmr.com/) - HTTPS enabled.
-
-Testnet version:
-
- - [https://testnet.xmrchain.com/](https://testnet.xmrchain.com/) - https enabled.
-
-Stagenet version:
- 
- - [https://stagenet.xmrchain.net/](https://stagenet.xmrchain.net/)
-
-i2p users (main Monero network):
-
- - [http://7o4gezpkye6ekibhgpkg7v626ze4idsirapufzrefkdysa6zxhha.b32.i2p/](http://7o4gezpkye6ekibhgpkg7v626ze4idsirapufzrefkdysa6zxhha.b32.i2p/)
-
-Tor versions:
-
- - [http://exploredv42tq2nowrll6f27nuymenndwupueqvyugaqzbrvmjhhceqd.onion/](http://exploredv42tq2nowrll6f27nuymenndwupueqvyugaqzbrvmjhhceqd.onion/) - Native v3 Onion, JSON API enabled, emission enabled, rawtx enabled.
-
-Alternative block explorers:
-
-- [https://localmonero.co/blocks](https://localmonero.co/blocks)
-- [https://monerovision.com](https://monerovision.com)
-
-
-## Onion Monero Blockchain Explorer features
-
-The key features of the Onion Monero Blockchain Explorer are:
+The key features of the Salvium Blockchain Explorer are:
 
  - no cookies, no web analytics trackers, no images,
  - open sourced,
@@ -61,48 +13,41 @@ The key features of the Onion Monero Blockchain Explorer are:
  - showing encrypted payments ID,
  - showing ring signatures,
  - showing transaction extra field,
- - showing public components of Monero addresses,
- - decoding which outputs and mixins belong to the given Monero address and viewkey,
- - can prove that you send Monero to someone,
+ - showing public components of Salvium addresses,
+ - decoding which outputs and mixins belong to the given Salvium address and viewkey,
+ - can prove that you send Salvium to someone,
  - detailed information about ring members, such as their age, timescale, and ring sizes,
  - showing number of amount output indices,
- - support Monero testnet and stagnet networks,
+ - support Salvium testnet and stagnet networks,
  - tx checker and pusher for online pushing of transactions,
  - estimate possible spendings based on address and viewkey,
  - can provide total amount of all miner fees,
  - decoding encrypted payment id,
  - decoding outputs and proving txs sent to sub-address.
 
+#### Salvium download and compilation
 
-## Development branch
-
-Current development branch:
-
- - https://github.com/moneroexamples/onion-monero-blockchain-explorer/tree/devel
-
-Note: `devel` branch of the explorer follows `master` branch of the monero!
-
-## Compilation on Ubuntu 18.04/20.04
-
-
-#### Monero download and compilation
-
-To download and compile recent Monero follow instructions
+To download and compile recent Salvium follow instructions
 in the following link:
 
-https://github.com/moneroexamples/monero-compilation/blob/master/README.md
+https://github.com/salvium/salvium/blob/main/README.md#compiling-salvium-from-source
 
+##### IMPORTANT: Fixup the MX25519 library
+
+On some platforms, the FindMonero library reports that it has found `libmx25519.so` and not `libmx25519.a`.
+If this happens, you MUST delete the `libmx25519.so` file, so that the explorer can link statically.
+    
 ##### Compile and run the explorer
 
-Once the Monero compiles, the explorer can be downloaded and compiled
+Once the Salvium suite compiles, the explorer can be downloaded and compiled
 as follows:
 
 ```bash
-# go to home folder if still in ~/monero
+# go to home folder if still in ~/salvium
 cd ~
 
 # download the source code 
-git clone https://github.com/moneroexamples/onion-monero-blockchain-explorer.git
+git clone https://github.com/salvium/salvium-blockchain-explorer.git
 
 # enter the downloaded sourced code folder
 cd onion-monero-blockchain-explorer
@@ -112,7 +57,7 @@ mkdir build && cd build
 
 # create the makefile
 cmake ..
-
+    
 # compile
 make
 ```
@@ -123,19 +68,19 @@ To run it:
 ./xmrblocks
 ```
 
-By default it will look for blockchain in its default location i.e., `~/.bitmonero/lmdb`.
+By default it will look for blockchain in its default location i.e., `~/.salvium/lmdb`.
 You can use `-b` option if its in different location.
 
 For example:
 
 ```bash
-./xmrblocks -b /home/mwo/non-default-monero-location/lmdb/
+./xmrblocks -b /home/mwo/non-default-salvium-location/lmdb/
 ```
 
 Example output:
 
 ```bash
-[mwo@arch onion-monero-blockchain-explorer]$ ./xmrblocks
+[mwo@arch salvium-blockchain-explorer]$ ./xmrblocks
 2016-May-28 10:04:49.160280 Blockchain initialized. last block: 1056761, d0.h0.m12.s47 time ago, current difficulty: 1517857750
 (2016-05-28 02:04:49) [INFO    ] Crow/0.1 server is running, local port 8081
 ```
@@ -161,20 +106,20 @@ docker build --no-cache --build-arg NPROC=3 --build-arg MONERO_BRANCH=master  -t
 - The build needs 3 GB space.
 - The final container image is 179MB.
 
-To run it, mount the monero blockchain onto the container as volume.
+To run it, mount the Salvium blockchain onto the container as volume.
 
 ```
 # either run in foreground
-docker run -it -v <path-to-monero-blockckain-on-the-host>:/home/monero/.bitmonero -p 8081:8081  xmrblocks
+docker run -it -v <path-to-salvium-blockckain-on-the-host>:/home/salvium/.salvium -p 8081:8081  xmrblocks
 
 # or in background
-docker run -it -d -v <path-to-monero-blockchain-on-the-host>:/home/monero/.bitmonero -p 8081:8081  xmrblocks
+docker run -it -d -v <path-to-salvium-blockchain-on-the-host>:/home/salvium/.salvium -p 8081:8081  xmrblocks
 ```
 
 Example output:
 
 ```
-docker run --rm -it -v /mnt/w7/bitmonero:/home/monero/.bitmonero -p 8081:8081 xmrblocks
+docker run --rm -it -v /mnt/w7/salvium:/home/monero/.salvium -p 8081:8081 xmrblocks
 Staring in non-ssl mode
 (2020-04-20 16:20:00) [INFO    ] Crow/0.1 server is running at 0.0.0.0:8081 using 1 threads
 ```
@@ -259,7 +204,7 @@ xmrblocks, Onion Monero Blockchain Explorer:
                                         enable users to have the index page on
                                         autorefresh
   --enable-emission-monitor [=arg(=1)] (=0)
-                                        enable Monero total emission monitoring
+                                        enable Salvium total emission monitoring
                                         thread
   -p [ --port ] arg (=8081)             default explorer port
   -x [ --bindaddr ] arg (=0.0.0.0)      default bind address for the explorer
@@ -282,13 +227,13 @@ xmrblocks, Onion Monero Blockchain Explorer:
                                         queries. Default is 0 which means it is
                                         based you on the cpu
   -b [ --bc-path ] arg                  path to lmdb folder of the blockchain,
-                                        e.g., ~/.bitmonero/lmdb
+                                        e.g., ~/.salvium/lmdb
   --ssl-crt-file arg                    path to crt file for ssl (https)
                                         functionality
   --ssl-key-file arg                    path to key file for ssl (https)
                                         functionality
   -d [ --daemon-url ] arg (=http:://127.0.0.1:19081)
-                                        Monero daemon url
+                                        Salvium daemon url
   --daemon-login arg                    Specify username[:password] for daemon 
                                         RPC client
   --enable-mixin-guess [=arg(=1)] (=0)  enable guessing real outputs in key
@@ -298,10 +243,10 @@ Example usage, defined as bash aliases.
 
 ```bash
 # for mainnet explorer
-alias xmrblocksmainnet='~/onion-monero-blockchain-explorer/build/xmrblocks    --port 9081 --testnet-url "http://139.162.32.245:9082" --enable-pusher --enable-emission-monitor'
+alias xmrblocksmainnet='~/salvium-blockchain-explorer/build/xmrblocks    --port 9081 --testnet-url "http://139.162.32.245:9082" --enable-pusher --enable-emission-monitor'
 
 # for testnet explorer
-alias xmrblockstestnet='~/onion-monero-blockchain-explorer/build/xmrblocks -t --port 9082 --mainnet-url "http://139.162.32.245:9081" --enable-pusher --enable-emission-monitor'
+alias xmrblockstestnet='~/salvium-blockchain-explorer/build/xmrblocks -t --port 9082 --mainnet-url "http://139.162.32.245:9081" --enable-pusher --enable-emission-monitor'
 ```
 
 Example usage when running via Docker:
@@ -316,7 +261,7 @@ docker run -it -d -v <path-to-salvium-blockchain-on-the-host>:/home/salvium/.sal
 
 Make sure to always start the portion of command line flags with `./xmrblocks` and set any flags you would like after that, as shown above.
 
-## Enable Monero emission
+## Enable Salvium emission
 
 Obtaining current Salvium emission amount is not straight forward. Thus, by default it is
 disabled. To enable it use `--enable-emission-monitor` flag, e.g.,
