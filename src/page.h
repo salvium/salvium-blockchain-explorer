@@ -828,9 +828,12 @@ index2(uint64_t page_no = 0, bool refresh_page = false)
         uint64_t tvl = CurrentBlockchainStatus::get_yield_info();
 
         string emission_blk_no   = std::to_string(current_values.blk_no - 1);
-        string emission_coinbase = xmr_amount_to_str(current_values.coinbase, "{:0.3f}");
+        // string emission_coinbase = xmr_amount_to_str(current_values.coinbase, "{:0.3f}");
         string emission_fee      = xmr_amount_to_str(current_values.fee, "{:0.3f}");
         string tvl_str           = xmr_amount_to_str(tvl, "{:0.3f}", false);
+
+        map<string, uint64_t> supply = CurrentBlockchainStatus::get_circulating_supply();
+        string emission_coinbase = xmr_amount_to_str(supply["SAL1"] + supply["STAKE"], "{:0.3f}");
 
         context["emission"] = mstch::map {
                 {"blk_no"    , emission_blk_no},
