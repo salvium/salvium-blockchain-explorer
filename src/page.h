@@ -420,6 +420,8 @@ struct tx_details
       else if (tx_type == cryptonote::transaction_type::CONVERT) return "CONVERT";
       else if (tx_type == cryptonote::transaction_type::STAKE) return "STAKE";
       else if (tx_type == cryptonote::transaction_type::AUDIT) return "AUDIT";
+      else if (tx_type == cryptonote::transaction_type::CREATE_TOKEN) return "CREATE_TOKEN";
+      else if (tx_type == cryptonote::transaction_type::ROLLUP) return "ROLLUP";
       return "-";
     }
 
@@ -3306,8 +3308,7 @@ show_checkrawtx(string raw_tx_data, string action)
                                 {"dest_address"   ,
                                  get_account_address_as_str(nettype,
                                                             a_dest.destination.is_subaddress,
-                                                            apa,
-                                                            true)},
+                                                            apa)},
                                 {"dest_amount"    , xmreg::xmr_amount_to_str(a_dest.amount)},
                                 {"dest_asset_type", a_dest.asset_type},
                                 {"is_this_change" , false}
